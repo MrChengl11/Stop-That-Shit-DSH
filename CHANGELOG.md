@@ -28,14 +28,17 @@ https://github.com/lennney/stop-that-shit 。
 
 | 场景（`change` + `files=src/**`） | 0.1.0 | 0.2.0 |
 | --- | --- | --- |
+| `mkdir -p src/new` | deny `WRITE_PATH_UNPROVEN` | **allow** |
 | `touch src/app.ts` | deny `WRITE_PATH_UNPROVEN` | **allow** |
 | `echo hi > src/out.txt` | deny `WRITE_PATH_UNPROVEN` | **allow** |
-| `mkdir -p src/new` | deny `WRITE_PATH_UNPROVEN` | deny `PATH_OUTSIDE_CONTRACT`（`src/new` 是目录路径，边界是 `src/**`；DSH cwd 下按目录判定） |
-| `touch README.md` | deny `WRITE_PATH_UNPROVEN` | deny `PATH_OUTSIDE_CONTRACT`（拒绝理由变准确） |
+| `touch README.md` | deny `WRITE_PATH_UNPROVEN` | deny `PATH_OUTSIDE_CONTRACT`（拒绝理由从「没证明」变准确） |
 | `git add -A` | deny `WRITE_PATH_UNPROVEN` | deny `WRITE_PATH_UNPROVEN`（不指名目标，不变） |
 | `npm run build` / `node scripts/build.js` | deny `WRITE_PATH_UNPROVEN` | deny `WRITE_PATH_UNPROVEN`（无法证明目标，仍 fail-closed） |
 | `deps=allow` + `npm install yaml` | deny `WRITE_PATH_UNPROVEN` | **allow** |
 | `deps=ask` + `npm install yaml` | deny `DEPENDENCY_NOT_AUTHORIZED` | deny `DEPENDENCY_NOT_AUTHORIZED`（不变） |
+
+上表为 `files=src/**` 下逐条实测。边界收窄成精确文件时（`files=src/app.ts`），
+`mkdir -p src/new` 会从「没证明」变成准确的 `PATH_OUTSIDE_CONTRACT`（目标在界外）。
 
 ### 测试
 
