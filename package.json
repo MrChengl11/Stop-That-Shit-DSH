@@ -25,14 +25,16 @@
     "lib/",
     "vendor-sts/",
     "test/",
+    "install.mjs",
     "cordis.patch.yml",
     "LICENSE",
+    "NOTICE.md",
     "README.md"
   ],
   "scripts": {
     "test": "node test/conformance.mjs",
-    "install": "node install.mjs",
-    "uninstall": "node install.mjs --uninstall"
+    "install:dsh": "node install.mjs",
+    "uninstall:dsh": "node install.mjs --uninstall"
   },
   "keywords": [
     "dsh",

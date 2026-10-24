@@ -40,6 +40,9 @@
 
 ## 快速开始
 
+也可以直接下 [Releases](https://github.com/MrChengl11/Stop-That-Shit-DSH/releases) 里的
+`dsh-stop-that-shit-0.1.0.tgz`，解包后跑 `node install.mjs`。
+
 ```bash
 node install.mjs              # 安装到默认 profile "desktop"
 node install.mjs --profile X  # 指定 profile
