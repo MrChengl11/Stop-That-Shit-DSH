@@ -11,10 +11,10 @@ It is not an official upstream project and carries no upstream endorsement.
 | 项 | 值 |
 | --- | --- |
 | 仓库 | https://github.com/lennney/stop-that-shit |
-| 版本 | v0.2.5 |
+| 版本 | commit `e2660f4`（tag 0.2.5 + 18 个提交，含上游 DSH host adapter 合并）+ 0.2.5.1 的两项修复 |
 | 许可证 | MIT |
 | 版权 | Copyright (c) 2026 Stop That Shit contributors |
-| 收录位置 | `vendor-sts/`（原样拷贝，未修改） |
+| 收录位置 | `vendor-sts/`（`src/adapters/` 已剔除，DSH 粘合层改由 `lib/` 承担） |
 
 ## 本仓库新增（二次开发部分）
 
@@ -24,7 +24,7 @@ It is not an official upstream project and carries no upstream endorsement.
 | `lib/adapter.js` | DSH 工具调用 → 上游 ControlEvent v2 的适配层 |
 | `cordis.patch.yml` | DSH profile 的 cordis 补丁（insert `sts-native`） |
 | `install.mjs` | 幂等安装/卸载脚本 |
-| `test/conformance.mjs` | 49 条一致性断言 |
+| `test/conformance.mjs` | 56 条一致性断言 |
 | `e2e/` | 端到端探针与报告 |
 | `research/claude-code-bridge/` | 早期桥接路线探针与结论 |
 | `docs/01–03` | 上游与 DSH 扩展面取证记录 |
@@ -36,7 +36,7 @@ It is not an official upstream project and carries no upstream endorsement.
 **不包含 DeepSeek Harness**。上游的决策引擎与宿主解耦（ControlEvent v2 协议），
 本仓库利用这一设计，只补一个宿主适配层，因此：
 
-* 上游的判定规则、指令语法、状态机 **一行未改**；
+* 上游的判定规则、指令语法、状态机 **未改**，只有 `src/shell-analysis.cjs`（证明 shell 写目标）与 `src/decision.cjs`（依赖授权先于文件边界）两处打了上游 0.2.5.1 的修复；
 * 上游升级时，只需替换 `vendor-sts/` 即可跟进；
 * 本仓库的所有缺陷都应算在适配层，而非上游。
 

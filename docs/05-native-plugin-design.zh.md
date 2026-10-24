@@ -4,6 +4,10 @@
 > （49 条确定性断言 + 19 条端到端断言，两套全绿）。
 > 交付物：[`sts-plugin/`](sts-plugin) — 包名 `dsh-stop-that-shit@0.1.0`。
 
+> **文档状态**：本文件是 v0.1.0 阶段的设计记录，保留原貌。v0.2.0 起 `vendor-sts/` 不再是上游原文
+> 冻结快照 —— 它基于上游 commit `e2660f4`，并打上了上游 0.2.5.1 的两项修复（shell 写目标证明、
+> 依赖授权先于文件边界）。当前状态见 `README.md`「本次修复」与 `CHANGELOG.md` 顶条。
+
 ---
 
 ## 一、上一轮的结论要改一半
@@ -45,8 +49,8 @@ sts-plugin/
 ├─ cordis.patch.yml      三行：- insert: / - id: sts-native / name: dsh-stop-that-shit
 ├─ lib/index.js          cordis 插件本体（335 行）
 ├─ lib/adapter.js        DSH 工具名 → STS action 事实（176 行）
-├─ vendor-sts/           upstream v0.2.5 的 src/ 全量 30 个 .cjs，原样内嵌，MIT
-└─ test/conformance.mjs  49 条确定性断言
+├─ vendor-sts/           upstream 决策引擎 src/ 30 个 .cjs，MIT（0.2.0 起含 0.2.5.1 两项修复）
+└─ test/conformance.mjs  确定性断言（v0.1.0 时 49 条，0.2.0 起 56 条）
 ```
 
 **关键设计：判定逻辑一行没改。** `vendor-sts/src/decision.cjs` 是 upstream 的原文，
@@ -175,7 +179,7 @@ Next: Report the finding, use a read-only action, or obtain an explicit change c
 - **未知 shell 在 `files=` 边界下必被判 `WRITE_PATH_UNPROVEN`。** `node -e ...`、`python x.py`
   这类一律 fail closed。好处是安全，坏处是可能拦掉本可放行的动作 —— 用 `files=**` 或调 level 解决。
 - **fail-open。** 任何 hook 异常只打 stderr 并放行，与 upstream 的 hook adapter 一致。
-- **`vendor-sts` 是 upstream v0.2.5 的冻结快照。** upstream 升级判定逻辑时需要重新 vendor。
+- **`vendor-sts` 基于 upstream commit `e2660f4` 的冻结快照**（0.2.0 起含 0.2.5.1 的两项修复）。upstream 升级判定逻辑时需要重新 vendor 并重打这两处。
 
 ---
 

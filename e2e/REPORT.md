@@ -1,6 +1,9 @@
 # stsnative native-plugin E2E rig — REPORT
 
 Status: **✅ 真包验收通过 — `dsh-stop-that-shit@0.1.0` 作为原生 cordis 插件加载成功，19/19 断言全绿（连续两轮）。**
+
+> **历史记录**：本报告写于 v0.1.0。当前版本为 v0.2.0（含上游 0.2.5.1 的 shell 写目标证明与依赖授权顺序两项修复），
+> 确定性断言已从 49 条扩到 56 条，`node test/conformance.mjs` 全绿。本文件中的包名与计数按当时原貌保留。
 junction 现指向 `D:\harness-deepseek workspace\dsh插件安装\sts-plugin`；验收命令 `node probe-native.mjs`（见 §7）。
 stub 阶段的 8/8 记录保留在 §4/§6 作为链路机制的佐证。
 Owner: native-e2e (task-3). Host: @deepseek-ai/dsh-desktop **0.2.1-rc.3** (runtime version printed by `dsh -V`).

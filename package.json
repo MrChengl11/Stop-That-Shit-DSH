@@ -1,6 +1,6 @@
 {
   "name": "dsh-stop-that-shit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Stop That Shit guard for DeepSeek Harness (derivative work): task-boundary modes, file/dependency/hash authorization and delegation budget enforced at tools/pre-execute.",
   "license": "MIT",

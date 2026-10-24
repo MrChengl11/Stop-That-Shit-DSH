@@ -2,10 +2,10 @@
 
 > **这是二次开发（derivative work），不是上游官方项目。**
 >
-> * 上游：[lennney/stop-that-shit](https://github.com/lennney/stop-that-shit) v0.2.5，MIT，作者 "Stop That Shit contributors"
+> * 上游：[lennney/stop-that-shit](https://github.com/lennney/stop-that-shit)（基于 commit `e2660f4`，即 tag 0.2.5 之后合并了 DSH host adapter 的 18 个提交），MIT，作者 "Stop That Shit contributors"
 > * 本仓库：MrChengl11 在 DeepSeek Harness 上的移植与适配层（DSH adapter）
 > * 上游**没有** DeepSeek Harness 适配器；本仓库的 `lib/`、`install.mjs`、`cordis.patch.yml`、`test/`、`docs/`、`e2e/`、`research/` 均为本仓库新增
-> * 上游决策引擎（`src/controller.cjs`、`src/decision.cjs`、`src/contracts.cjs` 等）**未做任何修改**，以 MIT 条款原样收录在 `vendor-sts/`
+> * 上游决策引擎（`src/controller.cjs`、`src/decision.cjs`、`src/contracts.cjs` 等）以 MIT 条款收录在 `vendor-sts/`，只在 `src/shell-analysis.cjs` 与 `src/decision.cjs` 上打了上游 0.2.5.1 的两项修复（见下方「本次修复」），其余未改
 > * 上游 MIT 许可证与版权声明保留在 `vendor-sts/LICENSE`；本仓库自身代码同样以 MIT 发布，见 `LICENSE`
 
 ---
@@ -16,8 +16,8 @@
 | --- | --- | --- |
 | `lib/index.js` | DSH 插件入口：挂 `tools/pre-execute` 等宿主钩子 | 本仓库新增 |
 | `lib/adapter.js` | DSH 工具名 → 上游 ControlEvent v2 的适配 | 本仓库新增 |
-| `vendor-sts/` | 上游 STS v0.2.5 源码，**原样**拷贝（MIT） | 上游 |
-| `test/conformance.mjs` | 49 条 conformance 断言，不跑模型 | 本仓库新增 |
+| `vendor-sts/` | 上游 STS 决策引擎（commit `e2660f4` + 0.2.5.1 两项修复，MIT） | 上游 |
+| `test/conformance.mjs` | 56 条 conformance 断言，不跑模型 | 本仓库新增 |
 | `install.mjs` | 幂等安装/卸载到任意 DSH profile | 本仓库新增 |
 | `e2e/` | 端到端探针（真实 headless 启动 + 真实模型） | 本仓库新增 |
 | `research/claude-code-bridge/` | 早期走 Claude Code hook 桥接路线的探针与结论 | 本仓库新增 |
@@ -38,16 +38,31 @@
 
 决定"拦不拦"的逻辑全部来自上游 `vendor-sts/`，本仓库不重写判定规则。
 
+## 本次修复（v0.2.0）
+
+上游 0.2.5 的 shell 判定只给命令分类，不给出**写目标路径**。因此在 `files=` 边界下设了界，
+任何 `mkdir` / `touch` / `git add` / shell 重定向都会被判 `WRITE_PATH_UNPROVEN` —— 即使目标就在边界内。
+本版本把上游 0.2.5.1 的两项修复搬进 `vendor-sts/`，并在 DSH 适配层接上：
+
+| 修复 | 位置 | 效果 |
+| --- | --- | --- |
+| A. 证明 shell 写目标 | `vendor-sts/src/shell-analysis.cjs` | `mkdir -p src/new` → `["src/new"]`；`echo hi > src/out.txt` → `["src/out.txt"]`；`git add -A` 这类不指名目标的仍为 `[]`，继续按未证明处理 |
+| A′. 适配层并集 | `lib/adapter.js` | shell 分析出的路径并入 `affectedPaths`，`files=` 边界能真正判定而不是一律 `WRITE_PATH_UNPROVEN` |
+| B. 依赖授权先于文件边界 | `vendor-sts/src/decision.cjs` | `deps=allow` 下装依赖不再被路径检查抢占；`deps=ask` / `deps=deny` 仍照常拦 |
+
+边界被证明在界外时，拒绝从 `WRITE_PATH_UNPROVEN` 变成更准确的 `PATH_OUTSIDE_CONTRACT`；
+已证明在界内的 shell 写（如 `touch src/app.ts`）直接放行。**无法证明目标的命令（`node build.js`、`npm run build`）行为不变，仍然 fail-closed。**
+
 ## 快速开始
 
 也可以直接下 [Releases](https://github.com/MrChengl11/Stop-That-Shit-DSH/releases) 里的
-`dsh-stop-that-shit-0.1.0.tgz`，解包后跑 `node install.mjs`。
+`dsh-stop-that-shit-0.2.0.tgz`，解包后跑 `node install.mjs`。
 
 ```bash
 node install.mjs              # 安装到默认 profile "desktop"
 node install.mjs --profile X  # 指定 profile
 node install.mjs --uninstall  # 卸载
-node test/conformance.mjs     # 49 条断言
+node test/conformance.mjs     # 56 条断言
 ```
 
 ---
@@ -60,7 +75,11 @@ Stop That Shit is a task-boundary guard: it does not sandbox the process, it kee
 agent inside the mode, files, dependency policy and delegation budget the user declared
 with a `$stop-that-shit` directive. Upstream ships adapters for Codex, Claude Code,
 OpenCode, Hermes Agent CLI, Pi and Oh My Pi. This package is the DeepSeek Harness adapter:
-it reuses the upstream decision engine unmodified and only supplies the host glue.
+it reuses the upstream decision engine and supplies the host glue.
+
+`vendor-sts/` is pinned to upstream commit `e2660f4` (merge of the upstream DSH host adapter)
+plus the two `0.2.5.1` fixes: the shell analyser now reports provable write targets, and
+dependency authority is decided before the file boundary. See “本次修复” above.
 
 ## What it does
 
@@ -137,7 +156,7 @@ watch-only, and nothing is denied.
 ## Verify it
 
 ```
-node test/conformance.mjs      # 49 assertions, no model in the loop
+node test/conformance.mjs      # 56 assertions, no model in the loop
 ```
 
 The suite drives the same handlers the plugin registers on a fake cordis ctx and asserts
@@ -154,12 +173,16 @@ tool the model chooses, so this suite is the deterministic gate.
 * **Not a security boundary.** Stop That Shit calls itself a guardrail; the real boundary
   stays the DSH sandbox and permission preset. A `run_code` script that writes through
   `node:fs` is classified as `control`, not as a file write, and is not path-checked.
-* A shell command whose target cannot be proven (e.g. `node -e ...`, `python x.py`) is
-  `unknown`; under a `files=` boundary that is denied as `WRITE_PATH_UNPROVEN`.
+* A shell command whose target cannot be proven (e.g. `node -e ...`, `python x.py`,
+  `npm run build`) is `unknown`; under a `files=` boundary that is denied as
+  `WRITE_PATH_UNPROVEN`. Since 0.2.0 the analyser proves targets for `mkdir`, `rm`,
+  `cp`, `mv`, `touch`, `git add <path>`, `Set-Content`, `Remove-Item` and shell
+  redirections, so those are judged by path instead of being refused outright.
 * The guard fails open: a hook error is logged and the action is allowed, matching the
   upstream hook adapters.
 
 ## Licensing
 
-`vendor-sts/` is the upstream `stop-that-shit` v0.2.5 source, MIT, copied verbatim;
-see `vendor-sts/LICENSE`. This package's own glue is MIT.
+`vendor-sts/` is the upstream `stop-that-shit` decision engine at commit `e2660f4`,
+MIT, with the two shell/dependency fixes from upstream `0.2.5.1` applied; see
+`vendor-sts/LICENSE`. This package's own glue is MIT.

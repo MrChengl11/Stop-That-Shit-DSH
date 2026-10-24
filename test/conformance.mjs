@@ -145,8 +145,20 @@ console.log("mutation outside the boundary is denied");
   check("absolute path outside cwd -> deny", () => assert.equal(gate.kind, "deny"));
 }
 {
+  // The shell analyser names the target of a mkdir: the boundary can judge the
+  // path instead of falling back to WRITE_PATH_UNPROVEN.
   const { gate } = await call(hook, "pwsh", { command: "mkdir -p src/new", description: "mkdir" });
-  check("shell write with unproven path -> deny", () => assert.equal(gate.kind, "deny"));
+  check("shell write with a proven target outside the boundary -> deny", () => assert.equal(gate.kind, "deny"));
+  check("reason is PATH_OUTSIDE_CONTRACT", () => assert.equal(reasonOf(gate), "PATH_OUTSIDE_CONTRACT"));
+  check("denial names the proven target", () => assert.match(gate.reason, /src.new/));
+}
+{
+  const { gate } = await call(hook, "pwsh", { command: "touch src/app.ts", description: "touch" });
+  check("shell write with a proven target inside the boundary -> allow", () => assert.equal(gate.kind, "allow"));
+}
+{
+  const { gate } = await call(hook, "pwsh", { command: "git add -A", description: "stage" });
+  check("shell write that names no target -> deny", () => assert.equal(gate.kind, "deny"));
   check("reason is WRITE_PATH_UNPROVEN", () => assert.equal(reasonOf(gate), "WRITE_PATH_UNPROVEN"));
 }
 {
@@ -214,6 +226,20 @@ console.log("hash and dependency policy");
     content: JSON.stringify({ name: "x", dependencies: { "left-pad": "1.0.0" } }, null, 2)
   });
   check("write adding a dependency under deps=ask -> deny", () => assert.equal(gate.kind, "deny"));
+  check("reason is DEPENDENCY_NOT_AUTHORIZED", () => assert.equal(reasonOf(gate), "DEPENDENCY_NOT_AUTHORIZED"));
+}
+// Dependency authority is decided before the file boundary: under deps=allow a
+// package manager (whose write target the guard cannot know) must not be refused
+// for WRITE_PATH_UNPROVEN.
+{
+  await prompt(strict, "$stop-that-shit change files=src/** deps=allow -- install a package");
+  const { gate } = await call(strict, "pwsh", { command: "npm install yaml", description: "install" });
+  check("dependency install under deps=allow -> allow", () => assert.equal(gate.kind, "allow"));
+}
+{
+  await prompt(strict, "$stop-that-shit change files=src/** deps=deny -- install a package");
+  const { gate } = await call(strict, "pwsh", { command: "npm install yaml", description: "install" });
+  check("dependency install under deps=deny -> deny", () => assert.equal(gate.kind, "deny"));
   check("reason is DEPENDENCY_NOT_AUTHORIZED", () => assert.equal(reasonOf(gate), "DEPENDENCY_NOT_AUTHORIZED"));
 }
 
