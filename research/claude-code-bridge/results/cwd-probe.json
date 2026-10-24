@@ -1,0 +1,12 @@
+{
+  "absolutePath": "D:/harness-deepseek workspace/dsh插件安装/bridge-test/src/app.ts",
+  "withCwd": {
+    "hookStdout": ""
+  },
+  "withoutCwd": {
+    "hookStdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"STOP / SCOPE\\nGuard returned permission deny.\\nReason: PATH_OUTSIDE_CONTRACT\\nDetail: The action writes outside the declared file boundary: D:/harness-deepseek workspace/dsh插件安装/bridge-test/src/app.ts.\\nCode: S/PATH_OUTSIDE_CONTRACT\\nState: ARMED / change\\nEvent: evt_2838b1cc-afe0-44b2-906e-8e963756201b\\nNext: Keep the write inside files=..., or obtain a new explicit file boundary.\"}}"
+  },
+  "bridgeDecision": {
+    "kind": "allow"
+  }
+}

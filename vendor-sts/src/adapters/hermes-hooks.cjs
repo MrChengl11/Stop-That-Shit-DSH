@@ -1,0 +1,142 @@
+'use strict';
+
+const { PROTOCOL_VERSION } = require('../control-protocol.cjs');
+const { handleControlEvent } = require('../controller.cjs');
+const { readState } = require('../state.cjs');
+const {
+  analyzeHermesTool,
+  countHermesDelegation
+} = require('./hermes-tool-classifier.cjs');
+const { optionalIdentifier } = require('./lifecycle-fields.cjs');
+
+const EVENT_KIND = {
+  pre_llm_call: 'prompt.submit',
+  pre_tool_call: 'action.before',
+  post_tool_call: 'action.after',
+  subagent_start: 'subagent.start',
+  subagent_stop: 'subagent.stop',
+  on_session_end: 'session.end'
+};
+
+function toControlEvent(input) {
+  if (!input || typeof input !== 'object') return null;
+  const kind = EVENT_KIND[input.hook_event_name];
+  if (!kind) return null;
+
+  const extra = input.extra && typeof input.extra === 'object' ? input.extra : {};
+  const event = {
+    protocolVersion: PROTOCOL_VERSION,
+    lifecycleVersion: 2,
+    kind,
+    sessionId: String(input.session_id || extra.parent_session_id || ''),
+    turnId: extra.turn_id || extra.parent_turn_id || input.turn_id || null,
+    host: {
+      family: 'hermes-agent',
+      model: input.model || extra.model || null,
+      permissionMode: null,
+      agentId: null,
+      agentType: null
+    }
+  };
+
+  if (kind === 'prompt.submit') {
+    event.prompt = String(extra.user_message || '');
+  }
+
+  if (kind === 'action.before') {
+    const analysis = analyzeHermesTool(input.tool_name, input.tool_input, input.cwd);
+    const actionId = optionalIdentifier(input.tool_call_id, extra.tool_call_id);
+    if (analysis.mutability === 'delegate' && !actionId) return null;
+    const action = {
+      id: actionId,
+      name: String(input.tool_name || 'unknown'),
+      input: input.tool_input,
+      ...analysis,
+      delegationCount: countHermesDelegation(input.tool_name, input.tool_input),
+      cwd: input.cwd,
+      unboundedDelegation: false
+    };
+    event.action = {
+      ...action
+    };
+  }
+
+  if (kind === 'action.after') {
+    if (input.tool_name !== 'delegate_task') return null;
+    const actionId = optionalIdentifier(input.tool_call_id, extra.tool_call_id);
+    if (!actionId) return null;
+    event.action = { id: String(actionId) };
+    event.action.lifecycle = 'unknown';
+    if (input.tool_name === 'delegate_task') {
+      let result = extra.result;
+      if (typeof result === 'string') { try { result = JSON.parse(result); } catch { result = null; } }
+      if (result && result.status === 'dispatched' && result.mode === 'background') {
+        event.action.lifecycle = 'running';
+        if (Array.isArray(result.subagent_ids)) {
+          event.action.agentAliases = result.subagent_ids.filter(id => typeof id === 'string' && id);
+        }
+      } else if (result && Array.isArray(result.results) && result.results.length
+          && result.results.every(entry => entry && ['completed', 'failed', 'error'].includes(entry.status))) {
+        event.action.lifecycle = 'joined';
+      }
+    }
+  }
+
+  if (kind === 'subagent.start' || kind === 'subagent.stop') {
+    // timeout/interrupted hooks can fire while a worker is still alive.
+    if (kind === 'subagent.stop' && !['completed', 'failed', 'error'].includes(extra.child_status)) return null;
+    if (kind === 'subagent.start') {
+      const alias = optionalIdentifier(extra.child_subagent_id, input.child_subagent_id);
+      if (alias) event.agentAlias = alias;
+    }
+    const agentId = extra.child_session_id
+      || input.child_session_id
+      || extra.child_subagent_id
+      || input.child_subagent_id
+      || null;
+    const normalizedAgentId = optionalIdentifier(agentId);
+    if (normalizedAgentId) event.agentId = normalizedAgentId;
+  }
+
+  return event;
+}
+
+function directiveErrorText(error) {
+  return `Stop That Shit directive rejected (${error.code}): ${error.message} `
+    + 'The previous contract is unchanged. Tools are paused until you submit a corrected instruction.';
+}
+
+function fromControlResult(result, kind) {
+  if (!result || result.kind === 'none') return null;
+  if (result.kind === 'prompt-error') return { context: directiveErrorText(result.error) };
+  if (result.kind === 'context') {
+    if (['subagent.start', 'subagent.stop', 'session.end'].includes(kind)) return null;
+    return { context: result.text };
+  }
+  if (result.kind === 'deny') return { action: 'block', message: result.message };
+  return null;
+}
+
+function handleHermesHook(input, options = {}) {
+  const event = toControlEvent(input);
+  if (!event) return null;
+  // pre_llm_call can add context but cannot reject a user turn. Keep invalid
+  // input from executing through the existing pre_tool_call block response.
+  if (event.kind === 'action.before') {
+    const error = readState(event.sessionId, options.dataDir).directiveError;
+    if (error) return { action: 'block', message: directiveErrorText(error) };
+  }
+  const result = handleControlEvent(event, options);
+  const output = fromControlResult(result, event.kind);
+  if (event.kind === 'prompt.submit' && result.kind !== 'prompt-error') {
+    const error = readState(event.sessionId, options.dataDir).directiveError;
+    if (error) return { context: directiveErrorText(error) + (output ? `\n${output.context}` : '') };
+  }
+  return output;
+}
+
+module.exports = {
+  fromControlResult,
+  handleHermesHook,
+  toControlEvent
+};

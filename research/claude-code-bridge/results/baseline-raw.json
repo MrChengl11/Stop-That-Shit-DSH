@@ -1,0 +1,334 @@
+{
+  "label": "baseline-raw",
+  "config": {
+    "configPath": "D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts\\hooks\\hooks.json",
+    "pluginRoot": "D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts",
+    "projectDir": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test",
+    "defaultTimeoutMs": 600000,
+    "stderrSummaryMaxChars": 500
+  },
+  "configPath": "D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts\\hooks\\hooks.json",
+  "pluginRoot": "D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts",
+  "dataDir": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test\\.sts-data\\baseline-raw",
+  "listeners": [
+    "agent/created",
+    "agent/pre-step",
+    "tools/pre-execute",
+    "tools/post-execute",
+    "agent/turn-stopping",
+    "subagent/start",
+    "subagent/end"
+  ],
+  "warnings": [],
+  "steps": [
+    {
+      "title": "agent/pre-step (UserPromptSubmit arming) -> $stop-that-shit change files=src/app.ts -- add the counter",
+      "value": {
+        "kind": "enter",
+        "messages": [
+          {
+            "content": [
+              {
+                "type": "text",
+                "text": "Stop That Shit (active): mode=change; agents=0/9007199254740991 reserved; hash=deny; deps=ask; files=src/app.ts. Stop Ladder: Is it requested? Is it necessary? What reachable evidence proves that? Would omission fail the current acceptance? Report real findings even when implementation is not authorized. Before expanding scope, name reachable evidence, failure if omitted, and the fact that changes the next action. Harness interception coverage is a guardrail, not a security boundary."
+              }
+            ],
+            "source": {
+              "kind": "hooks-claude-code"
+            },
+            "role": "user",
+            "id": "f8ae511c-8169-4f96-901a-db7daf9ade42"
+          }
+        ]
+      }
+    },
+    {
+      "title": "a. read src/app.ts (in scope, expect allow)  [read]",
+      "value": {
+        "input": {
+          "name": "read",
+          "arguments": {
+            "path": "src/app.ts"
+          },
+          "callId": "c1"
+        },
+        "payloadSentToHook": {
+          "session_id": "sess-1",
+          "transcript_path": "",
+          "hook_event_name": "PreToolUse",
+          "tool_name": "read",
+          "tool_input": {
+            "path": "src/app.ts"
+          },
+          "tool_use_id": "c1",
+          "cwd": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+        },
+        "hookStdout": "",
+        "decision": {
+          "kind": "allow"
+        }
+      }
+    },
+    {
+      "title": "b. write src/other.ts (out of scope, expect deny)  [write]",
+      "value": {
+        "input": {
+          "name": "write",
+          "arguments": {
+            "path": "src/other.ts",
+            "content": "x"
+          },
+          "callId": "c2"
+        },
+        "payloadSentToHook": {
+          "session_id": "sess-1",
+          "transcript_path": "",
+          "hook_event_name": "PreToolUse",
+          "tool_name": "write",
+          "tool_input": {
+            "path": "src/other.ts",
+            "content": "x"
+          },
+          "tool_use_id": "c2",
+          "cwd": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+        },
+        "hookStdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"STOP / SCOPE\\nGuard returned permission deny.\\nReason: PATH_OUTSIDE_CONTRACT\\nDetail: The action writes outside the declared file boundary: src/other.ts.\\nCode: S/PATH_OUTSIDE_CONTRACT\\nState: ARMED / change\\nEvent: evt_898aaa0e-f063-4566-9c32-5c99341ca4bb\\nNext: Keep the write inside files=..., or obtain a new explicit file boundary.\"}}\n",
+        "decision": {
+          "kind": "deny",
+          "reason": "STOP / SCOPE\nGuard returned permission deny.\nReason: PATH_OUTSIDE_CONTRACT\nDetail: The action writes outside the declared file boundary: src/other.ts.\nCode: S/PATH_OUTSIDE_CONTRACT\nState: ARMED / change\nEvent: evt_898aaa0e-f063-4566-9c32-5c99341ca4bb\nNext: Keep the write inside files=..., or obtain a new explicit file boundary."
+        }
+      }
+    },
+    {
+      "title": "c. glob **/*.ts (unknown to STS classifier)  [glob]",
+      "value": {
+        "input": {
+          "name": "glob",
+          "arguments": {
+            "pattern": "**/*.ts"
+          },
+          "callId": "c3"
+        },
+        "payloadSentToHook": {
+          "session_id": "sess-1",
+          "transcript_path": "",
+          "hook_event_name": "PreToolUse",
+          "tool_name": "glob",
+          "tool_input": {
+            "pattern": "**/*.ts"
+          },
+          "tool_use_id": "c3",
+          "cwd": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+        },
+        "hookStdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"STOP / SCOPE\\nGuard returned permission deny.\\nReason: WRITE_PATH_UNPROVEN\\nDetail: The action may write through a tool whose target path is not proven inside the declared file boundary.\\nCode: S/WRITE_PATH_UNPROVEN\\nState: ARMED / change\\nEvent: evt_40269608-f4b0-42b0-b437-718fc1f0b45c\\nNext: Use apply_patch or an Edit tool with visible paths, or obtain approval for an explicit broader boundary.\"}}\n",
+        "decision": {
+          "kind": "deny",
+          "reason": "STOP / SCOPE\nGuard returned permission deny.\nReason: WRITE_PATH_UNPROVEN\nDetail: The action may write through a tool whose target path is not proven inside the declared file boundary.\nCode: S/WRITE_PATH_UNPROVEN\nState: ARMED / change\nEvent: evt_40269608-f4b0-42b0-b437-718fc1f0b45c\nNext: Use apply_patch or an Edit tool with visible paths, or obtain approval for an explicit broader boundary."
+        }
+      }
+    },
+    {
+      "title": "d. ops_bash git status (unknown to STS classifier)  [ops_bash]",
+      "value": {
+        "input": {
+          "name": "ops_bash",
+          "arguments": {
+            "command": "git status"
+          },
+          "callId": "c4"
+        },
+        "payloadSentToHook": {
+          "session_id": "sess-1",
+          "transcript_path": "",
+          "hook_event_name": "PreToolUse",
+          "tool_name": "ops_bash",
+          "tool_input": {
+            "command": "git status"
+          },
+          "tool_use_id": "c4",
+          "cwd": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+        },
+        "hookStdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"STOP / SCOPE\\nGuard returned permission deny.\\nReason: WRITE_PATH_UNPROVEN\\nDetail: The action may write through a tool whose target path is not proven inside the declared file boundary.\\nCode: S/WRITE_PATH_UNPROVEN\\nState: ARMED / change\\nEvent: evt_3fd9bd2c-0098-4c4d-847d-48fad0be8b19\\nNext: Use apply_patch or an Edit tool with visible paths, or obtain approval for an explicit broader boundary.\"}}\n",
+        "decision": {
+          "kind": "deny",
+          "reason": "STOP / SCOPE\nGuard returned permission deny.\nReason: WRITE_PATH_UNPROVEN\nDetail: The action may write through a tool whose target path is not proven inside the declared file boundary.\nCode: S/WRITE_PATH_UNPROVEN\nState: ARMED / change\nEvent: evt_3fd9bd2c-0098-4c4d-847d-48fad0be8b19\nNext: Use apply_patch or an Edit tool with visible paths, or obtain approval for an explicit broader boundary."
+        }
+      }
+    },
+    {
+      "title": "e. write src/app.ts (in scope, expect allow)  [write]",
+      "value": {
+        "input": {
+          "name": "write",
+          "arguments": {
+            "path": "src/app.ts",
+            "content": "y"
+          },
+          "callId": "c5"
+        },
+        "payloadSentToHook": {
+          "session_id": "sess-1",
+          "transcript_path": "",
+          "hook_event_name": "PreToolUse",
+          "tool_name": "write",
+          "tool_input": {
+            "path": "src/app.ts",
+            "content": "y"
+          },
+          "tool_use_id": "c5",
+          "cwd": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+        },
+        "hookStdout": "",
+        "decision": {
+          "kind": "allow"
+        }
+      }
+    },
+    {
+      "title": "f. read src/other.ts (read outside scope, expect allow since read tools are not path-gated)  [read]",
+      "value": {
+        "input": {
+          "name": "read",
+          "arguments": {
+            "path": "src/other.ts"
+          },
+          "callId": "c6"
+        },
+        "payloadSentToHook": {
+          "session_id": "sess-1",
+          "transcript_path": "",
+          "hook_event_name": "PreToolUse",
+          "tool_name": "read",
+          "tool_input": {
+            "path": "src/other.ts"
+          },
+          "tool_use_id": "c6",
+          "cwd": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+        },
+        "hookStdout": "",
+        "decision": {
+          "kind": "allow"
+        }
+      }
+    },
+    {
+      "title": "g. tools/post-execute for write (what PostToolUse payload carries)",
+      "value": {
+        "decision": {
+          "kind": "enter"
+        },
+        "payloadSentToHook": {
+          "session_id": "sess-1",
+          "transcript_path": "",
+          "hook_event_name": "PostToolUse",
+          "tool_name": "write",
+          "tool_input": {
+            "path": "src/app.ts",
+            "content": "y"
+          },
+          "tool_use_id": "c5",
+          "tool_response": "Wrote src/app.ts",
+          "cwd": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+        },
+        "hookStdout": ""
+      }
+    },
+    {
+      "title": "h. agent/turn-stopping (Stop event) -> bridge emits no hook call unless configures Stop",
+      "value": {
+        "lastSpawn": "node \"D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts/hooks/stop-that-shit-claude.cjs\""
+      }
+    }
+  ],
+  "warningsAfter": [],
+  "allHookSpawns": [
+    {
+      "command": "node \"D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts/hooks/stop-that-shit-claude.cjs\"",
+      "workdir": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test",
+      "env": {
+        "CLAUDE_PROJECT_DIR": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+      },
+      "stdin": "{\"session_id\":\"sess-1\",\"transcript_path\":\"\",\"hook_event_name\":\"UserPromptSubmit\",\"prompt\":\"$stop-that-shit change files=src/app.ts -- add the counter\",\"cwd\":\"D:\\\\harness-deepseek workspace\\\\dsh插件安装\\\\bridge-test\"}\n",
+      "exitCode": 0,
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"Stop That Shit (active): mode=change; agents=0/9007199254740991 reserved; hash=deny; deps=ask; files=src/app.ts. Stop Ladder: Is it requested? Is it necessary? What reachable evidence proves that? Would omission fail the current acceptance? Report real findings even when implementation is not authorized. Before expanding scope, name reachable evidence, failure if omitted, and the fact that changes the next action. Harness interception coverage is a guardrail, not a security boundary.\"}}\n",
+      "stderr": ""
+    },
+    {
+      "command": "node \"D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts/hooks/stop-that-shit-claude.cjs\"",
+      "workdir": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test",
+      "env": {
+        "CLAUDE_PROJECT_DIR": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+      },
+      "stdin": "{\"session_id\":\"sess-1\",\"transcript_path\":\"\",\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"read\",\"tool_input\":{\"path\":\"src/app.ts\"},\"tool_use_id\":\"c1\",\"cwd\":\"D:\\\\harness-deepseek workspace\\\\dsh插件安装\\\\bridge-test\"}\n",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node \"D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts/hooks/stop-that-shit-claude.cjs\"",
+      "workdir": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test",
+      "env": {
+        "CLAUDE_PROJECT_DIR": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+      },
+      "stdin": "{\"session_id\":\"sess-1\",\"transcript_path\":\"\",\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"write\",\"tool_input\":{\"path\":\"src/other.ts\",\"content\":\"x\"},\"tool_use_id\":\"c2\",\"cwd\":\"D:\\\\harness-deepseek workspace\\\\dsh插件安装\\\\bridge-test\"}\n",
+      "exitCode": 0,
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"STOP / SCOPE\\nGuard returned permission deny.\\nReason: PATH_OUTSIDE_CONTRACT\\nDetail: The action writes outside the declared file boundary: src/other.ts.\\nCode: S/PATH_OUTSIDE_CONTRACT\\nState: ARMED / change\\nEvent: evt_898aaa0e-f063-4566-9c32-5c99341ca4bb\\nNext: Keep the write inside files=..., or obtain a new explicit file boundary.\"}}\n",
+      "stderr": ""
+    },
+    {
+      "command": "node \"D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts/hooks/stop-that-shit-claude.cjs\"",
+      "workdir": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test",
+      "env": {
+        "CLAUDE_PROJECT_DIR": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+      },
+      "stdin": "{\"session_id\":\"sess-1\",\"transcript_path\":\"\",\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"glob\",\"tool_input\":{\"pattern\":\"**/*.ts\"},\"tool_use_id\":\"c3\",\"cwd\":\"D:\\\\harness-deepseek workspace\\\\dsh插件安装\\\\bridge-test\"}\n",
+      "exitCode": 0,
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"STOP / SCOPE\\nGuard returned permission deny.\\nReason: WRITE_PATH_UNPROVEN\\nDetail: The action may write through a tool whose target path is not proven inside the declared file boundary.\\nCode: S/WRITE_PATH_UNPROVEN\\nState: ARMED / change\\nEvent: evt_40269608-f4b0-42b0-b437-718fc1f0b45c\\nNext: Use apply_patch or an Edit tool with visible paths, or obtain approval for an explicit broader boundary.\"}}\n",
+      "stderr": ""
+    },
+    {
+      "command": "node \"D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts/hooks/stop-that-shit-claude.cjs\"",
+      "workdir": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test",
+      "env": {
+        "CLAUDE_PROJECT_DIR": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+      },
+      "stdin": "{\"session_id\":\"sess-1\",\"transcript_path\":\"\",\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"ops_bash\",\"tool_input\":{\"command\":\"git status\"},\"tool_use_id\":\"c4\",\"cwd\":\"D:\\\\harness-deepseek workspace\\\\dsh插件安装\\\\bridge-test\"}\n",
+      "exitCode": 0,
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"STOP / SCOPE\\nGuard returned permission deny.\\nReason: WRITE_PATH_UNPROVEN\\nDetail: The action may write through a tool whose target path is not proven inside the declared file boundary.\\nCode: S/WRITE_PATH_UNPROVEN\\nState: ARMED / change\\nEvent: evt_3fd9bd2c-0098-4c4d-847d-48fad0be8b19\\nNext: Use apply_patch or an Edit tool with visible paths, or obtain approval for an explicit broader boundary.\"}}\n",
+      "stderr": ""
+    },
+    {
+      "command": "node \"D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts/hooks/stop-that-shit-claude.cjs\"",
+      "workdir": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test",
+      "env": {
+        "CLAUDE_PROJECT_DIR": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+      },
+      "stdin": "{\"session_id\":\"sess-1\",\"transcript_path\":\"\",\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"write\",\"tool_input\":{\"path\":\"src/app.ts\",\"content\":\"y\"},\"tool_use_id\":\"c5\",\"cwd\":\"D:\\\\harness-deepseek workspace\\\\dsh插件安装\\\\bridge-test\"}\n",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node \"D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts/hooks/stop-that-shit-claude.cjs\"",
+      "workdir": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test",
+      "env": {
+        "CLAUDE_PROJECT_DIR": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+      },
+      "stdin": "{\"session_id\":\"sess-1\",\"transcript_path\":\"\",\"hook_event_name\":\"PreToolUse\",\"tool_name\":\"read\",\"tool_input\":{\"path\":\"src/other.ts\"},\"tool_use_id\":\"c6\",\"cwd\":\"D:\\\\harness-deepseek workspace\\\\dsh插件安装\\\\bridge-test\"}\n",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": "node \"D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts/hooks/stop-that-shit-claude.cjs\"",
+      "workdir": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test",
+      "env": {
+        "CLAUDE_PROJECT_DIR": "D:\\harness-deepseek workspace\\dsh插件安装\\bridge-test"
+      },
+      "stdin": "{\"session_id\":\"sess-1\",\"transcript_path\":\"\",\"hook_event_name\":\"PostToolUse\",\"tool_name\":\"write\",\"tool_input\":{\"path\":\"src/app.ts\",\"content\":\"y\"},\"tool_use_id\":\"c5\",\"tool_response\":\"Wrote src/app.ts\",\"cwd\":\"D:\\\\harness-deepseek workspace\\\\dsh插件安装\\\\bridge-test\"}\n",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "prompt": "$stop-that-shit nope -- do it",
+  "hookStdout": "{\"decision\":\"block\",\"reason\":\"Unknown directive field. Put task text after -- or on the next line.\"}",
+  "bridgeDecision": {
+    "kind": "reject"
+  },
+  "reasonPreserved": false
+}

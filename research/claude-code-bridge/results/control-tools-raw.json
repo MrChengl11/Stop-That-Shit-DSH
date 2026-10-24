@@ -1,0 +1,44 @@
+[
+  {
+    "tool": "todo_write",
+    "decisionKind": "deny",
+    "reasonCode": "S/WRITE_PATH_UNPROVEN",
+    "reasonHead": "STOP / SCOPE | Guard returned permission deny. | Reason: WRITE_PATH_UNPROVEN | Detail: The action may write through a tool whose target path is not proven inside the declared file boundary."
+  },
+  {
+    "tool": "send_message",
+    "decisionKind": "deny",
+    "reasonCode": "S/WRITE_PATH_UNPROVEN",
+    "reasonHead": "STOP / SCOPE | Guard returned permission deny. | Reason: WRITE_PATH_UNPROVEN | Detail: The action may write through a tool whose target path is not proven inside the declared file boundary."
+  },
+  {
+    "tool": "create_goal",
+    "decisionKind": "deny",
+    "reasonCode": "S/WRITE_PATH_UNPROVEN",
+    "reasonHead": "STOP / SCOPE | Guard returned permission deny. | Reason: WRITE_PATH_UNPROVEN | Detail: The action may write through a tool whose target path is not proven inside the declared file boundary."
+  },
+  {
+    "tool": "update_goal",
+    "decisionKind": "deny",
+    "reasonCode": "S/WRITE_PATH_UNPROVEN",
+    "reasonHead": "STOP / SCOPE | Guard returned permission deny. | Reason: WRITE_PATH_UNPROVEN | Detail: The action may write through a tool whose target path is not proven inside the declared file boundary."
+  },
+  {
+    "tool": "present",
+    "decisionKind": "deny",
+    "reasonCode": "S/WRITE_PATH_UNPROVEN",
+    "reasonHead": "STOP / SCOPE | Guard returned permission deny. | Reason: WRITE_PATH_UNPROVEN | Detail: The action may write through a tool whose target path is not proven inside the declared file boundary."
+  },
+  {
+    "tool": "list_agents",
+    "decisionKind": "allow",
+    "reasonCode": null,
+    "reasonHead": null
+  },
+  {
+    "tool": "read",
+    "decisionKind": "allow",
+    "reasonCode": null,
+    "reasonHead": null
+  }
+]

@@ -1,0 +1,44 @@
+[
+  {
+    "tool": "todo_write",
+    "decisionKind": "allow",
+    "reasonCode": null,
+    "reasonHead": null
+  },
+  {
+    "tool": "send_message",
+    "decisionKind": "allow",
+    "reasonCode": null,
+    "reasonHead": null
+  },
+  {
+    "tool": "create_goal",
+    "decisionKind": "allow",
+    "reasonCode": null,
+    "reasonHead": null
+  },
+  {
+    "tool": "update_goal",
+    "decisionKind": "allow",
+    "reasonCode": null,
+    "reasonHead": null
+  },
+  {
+    "tool": "present",
+    "decisionKind": "allow",
+    "reasonCode": null,
+    "reasonHead": null
+  },
+  {
+    "tool": "list_agents",
+    "decisionKind": "allow",
+    "reasonCode": null,
+    "reasonHead": null
+  },
+  {
+    "tool": "read",
+    "decisionKind": "allow",
+    "reasonCode": null,
+    "reasonHead": null
+  }
+]

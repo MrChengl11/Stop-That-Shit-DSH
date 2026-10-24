@@ -1,0 +1,4 @@
+# dsh-stop-that-shit: one cordis entry, inserted into the profile tree.
+- insert:
+    - id: sts-native
+      name: dsh-stop-that-shit

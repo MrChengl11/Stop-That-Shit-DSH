@@ -1,0 +1,180 @@
+[
+  {
+    "name": "read",
+    "mutability": "read",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "write",
+    "mutability": "write",
+    "paths": [
+      "src/app.ts"
+    ],
+    "reason": null
+  },
+  {
+    "name": "edit",
+    "mutability": "write",
+    "paths": [
+      "src/app.ts"
+    ],
+    "reason": null
+  },
+  {
+    "name": "glob",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "grep",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "ops_bash",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "ops_bash",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "ops_inspect_local_file",
+    "mutability": "read",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "run_code",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "subagent",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "subagent_fork",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "spawn_teammate",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "send_message",
+    "mutability": "write",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "todo_write",
+    "mutability": "write",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "list_agents",
+    "mutability": "read",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "job_output",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "job_kill",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "present",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "ask_user_question",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "create_goal",
+    "mutability": "write",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "update_goal",
+    "mutability": "write",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "compress",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "decompress",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "schedule_create",
+    "mutability": "write",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "terminal_open",
+    "mutability": "read",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "terminal_send",
+    "mutability": "write",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "working_directory",
+    "mutability": "unknown",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "web_fetch",
+    "mutability": "read",
+    "paths": [],
+    "reason": null
+  },
+  {
+    "name": "web_search",
+    "mutability": "read",
+    "paths": [],
+    "reason": null
+  }
+]

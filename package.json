@@ -1,0 +1,62 @@
+{
+  "name": "dsh-stop-that-shit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Stop That Shit guard for DeepSeek Harness (derivative work): task-boundary modes, file/dependency/hash authorization and delegation budget enforced at tools/pre-execute.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "engines": {
+    "dsh": "0.2.1-rc.3",
+    "node": ">=22"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "files": [
+    "lib/",
+    "vendor-sts/",
+    "test/",
+    "cordis.patch.yml",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node test/conformance.mjs",
+    "install": "node install.mjs",
+    "uninstall": "node install.mjs --uninstall"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "plugin",
+    "guardrail",
+    "stop-that-shit",
+    "derivative-work",
+    "secondary-development"
+  ],
+  "author": "MrChengl11",
+  "contributors": [
+    {
+      "name": "Stop That Shit contributors",
+      "url": "https://github.com/lennney/stop-that-shit"
+    }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrChengl11/Stop-That-Shit-DSH.git"
+  },
+  "homepage": "https://github.com/MrChengl11/Stop-That-Shit-DSH#readme",
+  "bugs": {
+    "url": "https://github.com/MrChengl11/Stop-That-Shit-DSH/issues"
+  }
+}

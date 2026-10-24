@@ -1,0 +1,15 @@
+{
+  "warnings": [],
+  "preStepDecision": {
+    "kind": "enter",
+    "messages": []
+  },
+  "armedThoughGuardDead": true,
+  "preExecuteDecision": {
+    "kind": "allow"
+  },
+  "hookCommandAsExecuted": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/stop-that-shit-claude.cjs\"",
+  "hookExitCode": 1,
+  "hookStderr": "node:internal/modules/cjs/loader:1568\r |   throw err;\r |   ^\r | \r",
+  "outOfScopeWriteAllowed": true
+}

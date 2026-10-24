@@ -1,0 +1,59 @@
+{
+  "registeredEvents": [
+    "SessionStart",
+    "UserPromptSubmit",
+    "PreToolUse",
+    "PostToolUse",
+    "SessionEnd",
+    "SubagentStart",
+    "PostToolUseFailure",
+    "PermissionDenied"
+  ],
+  "markersObserved": [
+    "PostToolUse",
+    "PreToolUse",
+    "SessionStart",
+    "SubagentStart",
+    "UserPromptSubmit"
+  ],
+  "reached": {
+    "SessionStart": true,
+    "UserPromptSubmit": true,
+    "PreToolUse": true,
+    "PostToolUse": true,
+    "SessionEnd": false,
+    "SubagentStart": true,
+    "PostToolUseFailure": false,
+    "PermissionDenied": false
+  },
+  "unreachable": [
+    "SessionEnd",
+    "PostToolUseFailure",
+    "PermissionDenied"
+  ],
+  "bridgeListeners": [
+    "agent/created",
+    "agent/pre-step",
+    "tools/pre-execute",
+    "tools/post-execute",
+    "agent/turn-stopping",
+    "subagent/start",
+    "subagent/end"
+  ],
+  "warnings": [],
+  "extensionPointResults": {
+    "agent/created": "ran",
+    "agent/pre-step": {
+      "kind": "enter",
+      "messages": []
+    },
+    "tools/pre-execute": {
+      "kind": "allow"
+    },
+    "tools/post-execute": {
+      "kind": "enter"
+    },
+    "subagent/start": "ran",
+    "subagent/end": "ran"
+  }
+}

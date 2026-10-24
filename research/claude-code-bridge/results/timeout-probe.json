@@ -1,0 +1,28 @@
+[
+  {
+    "label": "timeout-1s-vs-2500ms-hook",
+    "configTimeout": 1,
+    "wallMs": 2632,
+    "decision": {
+      "kind": "allow"
+    }
+  },
+  {
+    "label": "timeout-5s-vs-2500ms-hook",
+    "configTimeout": 5,
+    "wallMs": 2650,
+    "decision": {
+      "kind": "deny",
+      "reason": "slow hook reached its decision after 2500ms"
+    }
+  },
+  {
+    "label": "no-timeout-default-600000ms",
+    "configTimeout": null,
+    "wallMs": 2641,
+    "decision": {
+      "kind": "deny",
+      "reason": "slow hook reached its decision after 2500ms"
+    }
+  }
+]

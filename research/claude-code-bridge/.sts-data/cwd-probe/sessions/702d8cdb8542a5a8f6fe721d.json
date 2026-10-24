@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 4,
+  "contract": {
+    "mode": "change",
+    "level": "guard",
+    "agentBudget": 9007199254740991,
+    "hashPolicy": "deny",
+    "allowedPaths": [
+      "src/app.ts"
+    ],
+    "dependencyPolicy": "ask",
+    "source": "directive"
+  },
+  "delegation": {
+    "reservations": {},
+    "agentIdsSeen": [],
+    "stoppedAgentIds": [],
+    "unresolved": {},
+    "acceptedActions": {}
+  },
+  "directiveWarning": null,
+  "directiveError": null,
+  "lastPromptContext": "Stop That Shit (active): mode=change; agents=0/9007199254740991 reserved; hash=deny; deps=ask; files=src/app.ts. Stop Ladder: Is it requested? Is it necessary? What reachable evidence proves that? Would omission fail the current acceptance? Report real findings even when implementation is not authorized. Before expanding scope, name reachable evidence, failure if omitted, and the fact that changes the next action. Harness interception coverage is a guardrail, not a security boundary."
+}

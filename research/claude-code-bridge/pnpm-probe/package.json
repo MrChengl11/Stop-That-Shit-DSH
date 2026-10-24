@@ -1,0 +1,9 @@
+{
+  "name": "pnpm-probe",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@deepseek-ai/dsh-hook-protocol": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-hooks-claude-code": "0.2.1-rc.2"
+  }
+}

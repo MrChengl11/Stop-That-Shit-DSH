@@ -1,0 +1,16 @@
+{
+  "label": "raw",
+  "configPath": "D:\\harness-deepseek workspace\\dsh插件安装\\lead-sts\\hooks\\hooks.json",
+  "samplesMs": [
+    120,
+    116,
+    115,
+    118,
+    113,
+    119,
+    117
+  ],
+  "medianMs": 117,
+  "minMs": 113,
+  "maxMs": 120
+}

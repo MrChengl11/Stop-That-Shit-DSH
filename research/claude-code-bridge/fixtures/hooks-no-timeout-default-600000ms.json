@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"D:/harness-deepseek workspace/dsh插件安装/bridge-test/slow-hook.cjs\" 2500 PreToolUse",
+            "statusMessage": "Checking the Stop Ladder..."
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 4,
+  "contract": {
+    "mode": "unconfirmed",
+    "level": "watch",
+    "agentBudget": 9007199254740991,
+    "hashPolicy": "deny",
+    "allowedPaths": null,
+    "dependencyPolicy": "ask",
+    "source": "default"
+  },
+  "delegation": {
+    "reservations": {},
+    "agentIdsSeen": [],
+    "stoppedAgentIds": [],
+    "unresolved": {},
+    "acceptedActions": {}
+  },
+  "directiveWarning": null,
+  "directiveError": {
+    "code": "INVALID_DIRECTIVE_TOKEN",
+    "token": "nope",
+    "message": "Unknown directive field. Put task text after -- or on the next line."
+  },
+  "lastPromptContext": null
+}
