@@ -60,10 +60,19 @@ if (uninstall) {
   process.exit(0);
 }
 
-// 1. copy to the stable home (skip when already running from there)
+// 1. copy to the stable home (skip when already running from there).
+// Only the published files are copied: a checkout also holds .git, docs and the
+// e2e fixtures, and .git objects cannot be copied while git has them open.
 if (path.resolve(PACKAGE) !== path.resolve(dest)) {
   fs.mkdirSync(dest, { recursive: true });
-  fs.cpSync(PACKAGE, dest, { recursive: true, force: true });
+  const entries = manifest.files?.length ? manifest.files : ["."];
+  for (const entry of entries) {
+    const name = entry.replace(/\/$/, "");
+    const from = path.join(PACKAGE, name);
+    if (!fs.existsSync(from)) continue;
+    fs.cpSync(from, path.join(dest, name), { recursive: true, force: true });
+  }
+  fs.copyFileSync(path.join(PACKAGE, "package.json"), path.join(dest, "package.json"));
 }
 console.log("package home: " + dest);
 

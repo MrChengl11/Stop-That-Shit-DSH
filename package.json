@@ -29,6 +29,7 @@
     "cordis.patch.yml",
     "LICENSE",
     "NOTICE.md",
+    "CHANGELOG.md",
     "README.md"
   ],
   "scripts": {
