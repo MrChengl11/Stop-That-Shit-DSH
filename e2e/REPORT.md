@@ -8,6 +8,10 @@ junction 现指向 `D:\harness-deepseek workspace\dsh插件安装\sts-plugin`；
 stub 阶段的 8/8 记录保留在 §4/§6 作为链路机制的佐证。
 Owner: native-e2e (task-3). Host: @deepseek-ai/dsh-desktop **0.2.1-rc.3** (runtime version printed by `dsh -V`).
 
+> **rc.5 续篇**：DeepSeek Harness **0.2.1-rc.5** 上的真机验收见 [`e2e/REPORT-rc5.md`](REPORT-rc5.md)
+> （真实模型 + 持久化 session 取证：notice 是否注入、denial 原因是否真的到了模型眼里）。
+> 本文件保留 rc.3 时期的历史结论；§5.4 与 §7.9 已按 rc.5 实测补了**勘误**，其余按当时原貌保留。
+
 ---
 
 ## 1. Verdict up front
@@ -216,7 +220,14 @@ export function apply(ctx, config) {  // 必须导出 apply
 - bundle 级别 → 该 bundle **整层被丢掉**，我们的行根本不会挂载，只在 stderr 打一行 `dsh: skipping profile bundle ...`（**极易被忽略**）；
 - row 级别 → 行被 `disabled`，stderr 打 `dsh: disabling profile plugin row "sts-native": Plugin ... is incompatible with dsh 0.2.1-rc.3 ...`。
 
-**给真包的建议**：要么不写 peerDependencies/engines，要么写 `"engines": { "dsh": "0.2.1-rc.3" }`。绝不要照抄 `@deepseek-ai/dsh-hooks-claude-code` 的 `"0.2.1-rc.2"` —— 那个包在 ststest profile 里实测就是被这条闸门 disable 的。
+**给真包的建议（rc.3 时期）**：要么不写 peerDependencies/engines，要么写 `"engines": { "dsh": "0.2.1-rc.3" }`。绝不要照抄 `@deepseek-ai/dsh-hooks-claude-code` 的 `"0.2.1-rc.2"` —— 那个包在 ststest profile 里实测就是被这条闸门 disable 的。
+
+> ⚠️ **rc.5 勘误（2026-11，实测）**：上面这条“写精确版本”的建议在 **0.2.1-rc.5 上是错的**。
+> 精确 pin `"engines": { "dsh": "0.2.1-rc.3" }` 会让整个 bundle 在 rc.5 上**被静默跳过**：
+> `--dump-config` 里 0 行 `sts-native`，stderr 只有一行 `dsh: skipping profile bundle "dsh-stop-that-shit": ...`（**极易被忽略**），exit code 仍是 0。
+> 正确写法是**范围**：`"engines": { "dsh": "^0.2.1-rc.3" }`。
+> 注意 `^0.2.1` **也不行** —— semver 的范围默认排除 prerelease，`^0.2.1` 匹配不到 `0.2.1-rc.5`。
+> 复现与取证见 [`REPORT-rc5.md`](REPORT-rc5.md) §5.1。
 
 ### 5.4.1 兼容闸门 —— 三种清单的实测结果
 
@@ -501,7 +512,7 @@ Next: Report the finding, use a read-only action, or obtain an explicit change c
 
 ### 7.7 仍然成立的注意事项
 
-- 真包 `package.json` 声明了 `"engines": {"dsh": "0.2.1-rc.3"}` —— 正好绕开 §5.4 的兼容闸门，**不要删**。
+- 真包 `package.json` 声明的是 `"engines": {"dsh": "^0.2.1-rc.3"}`（rc.3 时期是精确值 `"0.2.1-rc.3"`；rc.5 上精确值会静默跳过整个 bundle，见 §5.4 勘误）—— 正好绕开 §5.4 的兼容闸门，**不要删**。
 - 真包 `vendor-sts/package.json` **没有 `dsh.bundle`**，包名也是 `stop-that-shit`，它**不能**单独当 bundle；
   必须是外层 `dsh-stop-that-shit` 包（已如此）。
 - 真包不 import 任何 `@deepseek-ai/*`，只用 `node:` 内置模块 + `createRequire` 加载 `vendor-sts/*.cjs`。
@@ -561,6 +572,14 @@ context(context) {
 **注入确实生效的实证**：review 场景里模型的 final 自己复述了
 `Stop Ladder` 的三问（"Requested? / Necessary? / Not provable"）和 `ARMED / review` 状态字样 ——
 这两样只存在于 `contractContext()` 返回的文本里，说明 `systemPrompt.context` 的文本真的进了模型上下文。
+
+> ⚠️ **rc.5 勘误（措辞）**：`systemPrompt.context` 的文本**不是**进 system prompt，而是成为
+> **运行时上下文（runtime context）那条 USER 消息里的一个 section**。持久化 session 实测：
+> 该消息 `source.kind = "runtime-context"`，`source.sections[]` 依次是
+> `working-directory:current` / `sandbox:policy` / `approval:policy` / **`sts:contract`**（`order: 550`）。
+> 所以准确说法是“进了 **runtime context**”。
+> 另外 `tools/pre-execute` 的 `exec.arguments` 是**冻结**的，而 `exec` 对象本身**不冻结**（可挂 `deferContext` 等），
+> 插件读取/改写时要按这个前提来。实测见 [`REPORT-rc5.md`](REPORT-rc5.md) §5.2。
 
 ### 7.10 剩余风险
 
