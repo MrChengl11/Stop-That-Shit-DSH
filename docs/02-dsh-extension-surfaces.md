@@ -3,6 +3,8 @@
 > 研究对象：本机安装的 DSH 桌面端 v0.2.1-rc.2（Electron，win32-x64，hostProtocolVersion 4，内置 Node 24.21.0，pnpm 11.28.5）
 > 调研目的：判断 DSH 能否承载第三方「Skill + 工具调用前拦截」插件（对标 Claude Code 的 PreToolUse / Codex hooks）
 > 取证方式：直接读取 app.asar 内的已发布 ESM 源码与随包文档（bash 无法进 asar，run_code 的 Electron patched fs 可直接 readFileSync），并对照本机已安装的第三方插件 dsh-ops 真实实现。全程只读，未改动任何用户配置或安装目录。
+>
+> **rc.5 复核（2026-11-03，v0.2.1 发布前）**：本文行号与结论取自 v0.2.1-rc.2；对 0.2.1-rc.3 与 0.2.1-rc.5 做逐文件比对后确认，本文涉及的五个宿主 seam 与工具管线在 rc.5 上**逐字节未变**（行号可直接复用）。复核记录见 [`06-rc5-host-contract.zh.md`](06-rc5-host-contract.zh.md)，本轮更正的口径见文末「11. 勘误」。
 
 ---
 
@@ -11,8 +13,8 @@
 | 问题 | 结论 |
 | --- | --- |
 | 是否存在「工具调用前」拦截/否决钩子？ | **有，且是一等公民**。`tools/pre-execute` waterfall + `ctx.tools.guard()` 单调否决 + `ctx.tools.restrict()` 工具裁剪 + `approval` ask 通道，四层齐全 |
-| 能否从插件里读到工具名与 JSON 参数？ | 能。pre-execute 的 `exec` 含 `{ token, callId, rootCallId, name, signal, agent, parent, schema, arguments }` |
-| 能否改写工具参数？ | **不能**。`exec.arguments` 被 `deepFreeze` 深冻结，`exec` 自身 `Object.freeze`；改写属被拒绝的设计 |
+| 能否从插件里读到工具名与 JSON 参数？ | 能。pre-execute 的 `exec` 含 `{ token, callId, rootCallId, name, signal, agent, deferContext, concludeTurn, arguments }`；`parent` / `schema` 仅在存在时出现（不存在时是**缺键**，不是 `undefined` 值） |
+| 能否改写工具参数？ | **不能**。`exec.arguments` 在进入 `tools/pre-execute` 之前已被 `deepFreeze` 深冻结；`exec` **本体**要到 `notifyResult()`（post-execute 之后）才 `Object.freeze`，pre-execute 阶段不能假定 exec 只读。改写属被拒绝的设计 |
 | 能否否决（阻止执行）？ | 能。返回 `{ kind: "deny", reason, info? }`，工具体根本不会执行；或 `{ kind: "ask" }` 走用户批准 |
 | 技能系统是否兼容 Claude Agent Skills？ | 部分兼容：`name` + `description` 必填，`whenToUse`/`metadata` 可选，多余键被容忍但忽略；**没有** `.claude/skills` 目录，**没有** `allowed-tools` 强制 |
 | 技能里能否带可执行脚本？ | 能作为资源文件存在，但执行只能走普通 bash/pwsh 工具，没有技能自带执行器 |
@@ -67,7 +69,7 @@ tools/result        (只读观察冻结后的最终结果)
 | 3339-3353 | deny 分支 → `next({ kind: "post-result", exec, result: this.materializeFinalResult({ content: [{ type: "text", text: `Error: ${denialReason}` }], isError: true, error: { message: denialReason, ...info } }) })` —— **工具体不执行** |
 | 3427 | `const result = await this.ctx.waterfall(carrier, "tools/execute", mutableExec, () => this.dispatchToolBody(mutableExec));` |
 | 3390 | `async dispatchToolBody(exec) {` —— `:3406` `const returned = await tool.execute(exec.arguments, exec);` |
-| 3506 | `Object.freeze(exec);` |
+| 3506 | `Object.freeze(exec);` —— 位于 `notifyResult()` 内、`tools/post-execute` **之后**；pre-execute 阶段 `exec` 本体未冻结（冻结的只有 `exec.arguments`，3259-3264） |
 | 3600 | `const decision = await this.ctx.waterfall(scopeTarget(this, exec.agent), "tools/post-execute", exec, result, () => Promise.resolve({ kind: "accept" }));` |
 | 3017-3021 | `guard(guard) { return this.layers.effect(this.ctx, (layer) => layer.guards.append(guard), { label: "tools.guard()", notify: false }); }` |
 | 2743-2748 | `guardReason(exec) { for (const guard of this.guards.values()) { const reason = guard(exec); if (reason !== void 0) return reason; } }` —— 先全局层、再 scope 链，第一个返回 string 的 guard 即否决 |
@@ -142,7 +144,7 @@ ctx.on("tools/result", (exec, result) => { /* ... */ });
 证据（`dsh-tools/lib/index.js`）：
 - 3259-3264：`const detached = snapshotJsonValue(exec.arguments); if (detached === void 0) throw new TypeError("tool execution arguments must be losslessly JSON-serializable"); const execution = { ...base, arguments: deepFreeze(detached) };`
 - `deepFreeze` 来自 `@deepseek-ai/dsh-util-values`（迭代 WeakSet 遍历 + 每个节点 `Object.freeze`，跳过 `AbortSignal`）→ 任何嵌套对象都不可写。
-- 3506：`Object.freeze(exec);`（exec 本体也冻结）。
+- 3506：`Object.freeze(exec);`（exec 本体也冻结）——但这行在 `notifyResult()` 里、post-execute **之后**执行；pre-execute 阶段 `exec` 本体并未冻结，结论「不能改写参数」只由 `exec.arguments` 的深冻结（3259-3264）与 dispatch 直读同一对象保证。
 - 3389-3410 `dispatchToolBody(exec)`：`const returned = await tool.execute(exec.arguments, exec);` —— 直接用同一个冻结对象，策略阶段之后不再重新校验参数。
 
 因此：ESM 严格模式下写冻结属性会抛 TypeError；即便静默忽略，dispatch 读的仍是 `exec.arguments`，改写也不会生效。**要改行为请用 `tools/execute`（包一层）或 `tools/post-execute`（改结果），要阻止请用 deny/ask。**
@@ -433,10 +435,45 @@ ctx.on("tools/result", (exec, result) => { /* ... */ });
 
 ## 10. 未决 / 需实证的点
 
-1. `tools/pre-execute` 的 `exec.arguments` 在 deny 之前是否可能被上游 `tools/execute` 包装器替换 —— 从代码看 `mutableExec` 只允许改 `signal`，参数对象未替换，但未做运行时实证。
+1. `tools/pre-execute` 的 `exec.arguments` 在 deny 之前是否可能被上游 `tools/execute` 包装器替换 —— 从代码看 `mutableExec` 只允许改 `signal`，参数对象未替换，但未做运行时实证。（rc.5 复核：`exec.arguments` 深冻结 + dispatch 直读同一对象已在 rc.5 上实测确认，本条按「参数不可被替换/改写」关闭；见 `06-rc5-host-contract.zh.md` §2.3）
 2. `ask` 路径在 `approval: never` 预设下的实际体验（直接 deny 文案）未实测。
 3. `agent/pre-step` 改写 messages 时对 `startsRequestSeries` 等字段的保留要求来自文档警告，未实测。
 4. 官方 `dsh-hooks-claude-code` 包的行为（本机未安装，无法读取实现）—— 若要复用 Claude `hooks.json` 语义，需先安装后验证。
+
+---
+
+## 11. 勘误（v0.2.1 / rc.5 复核）
+
+本轮发布 v0.2.1 时，对 0.2.1-rc.3 与 0.2.1-rc.5 做逐文件比对（记录见 [`06-rc5-host-contract.zh.md`](06-rc5-host-contract.zh.md)），
+并据此更正本文两处口径。两处都**不改变**结论方向，只是把「何时冻结」与「落在哪里」说准。
+
+### 11.1 `exec` 的冻结时序
+
+| 原文 | 更正 |
+| --- | --- |
+| §0 表「`exec.arguments` 被 `deepFreeze` 深冻结，`exec` 自身 `Object.freeze`」 | `exec.arguments` 在 `tools/pre-execute` 之前已深冻结（`dsh-tools/lib/index.js:3259-3264`）；`exec` **本体**在 `notifyResult()` 里、post-execute **之后**才 `Object.freeze`（`:3504-3506`）。pre-execute 阶段 exec 本体可写，但改写它没有意义——dispatch 直读 `exec.arguments`。 |
+| §2.2 表 3506 行 | 该行当时未标注所在函数；实际位于 `notifyResult()`，不是 pre-execute 阶段。 |
+| §3.1「3506：exec 本体也冻结」 | 同上；「参数不可改写」的证据是深冻结（3259-3264）与 dispatch 直读（`:3406`），不是 3506。 |
+
+附带更正：`exec` 的自有键实测为 `token / callId / rootCallId / name / signal / agent / deferContext / concludeTurn / arguments`；
+`parent` / `schema` **不存在时是缺键**（`"parent" in exec === false`），不是值为 `undefined` 的键。
+
+### 11.2 `systemPrompt.context` 的落点
+
+本文没有把这一点写成错误结论（没有展开 `systemPrompt.context`），但 v0.1.0 阶段的口头口径是「写进系统提示」。
+rc.5 实测的落点不同：
+
+* `systemPrompt.context()` 注册的文本**不进 system prompt**，而是被 `dsh-agent-loop` 的 `preStep()` 默认实现
+  渲染成 **runtime-context 用户消息里的一个 section**（`dsh-agent-loop/lib/index.js:913-919`）；
+* 该用户消息的 `source.kind === "runtime-context"`，`sections[].name` 是本插件注册的 `"sts:contract"`；
+* 内置 context 的 order 是 100–210（`dsh-system-prompt/lib/index.js:44-52`），插件的 `order: 550` 排在它们**之后**；
+* 因此文档措辞应是「运行时上下文 / runtime context」，不是「系统提示 / system prompt」。
+
+### 11.3 未变的部分
+
+五个 seam（`agent/inbox/claimed`、`agent/pre-step`、`tools/pre-execute`、`tools/post-execute`、`systemPrompt.context`）
+在 rc.3 → rc.5 之间**逐字节相同**；305 个 shared package 中只有 7 个有代码变化，全部与 UI/MCP 相关。
+本文基于 rc.2 的行号在 rc.5 上可直接复用（详见 `06-rc5-host-contract.zh.md`）。
 
 ---
 

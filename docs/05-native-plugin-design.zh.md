@@ -4,9 +4,12 @@
 > （49 条确定性断言 + 19 条端到端断言，两套全绿）。
 > 交付物：[`sts-plugin/`](sts-plugin) — 包名 `dsh-stop-that-shit@0.1.0`。
 
-> **文档状态**：本文件是 v0.1.0 阶段的设计记录，保留原貌。v0.2.0 起 `vendor-sts/` 不再是上游原文
-> 冻结快照 —— 它基于上游 commit `e2660f4`，并打上了上游 0.2.5.1 的两项修复（shell 写目标证明、
-> 依赖授权先于文件边界）。当前状态见 `README.md`「本次修复」与 `CHANGELOG.md` 顶条。
+> **文档状态**：本文件是 v0.1.0 阶段的设计记录，保留原貌。后续版本的变化：v0.2.0 起 `vendor-sts/`
+> 不再是上游原文冻结快照 —— 它基于上游 commit `e2660f4`，并打上了上游 0.2.5.1 的两项修复
+> （shell 写目标证明、依赖授权先于文件边界）；v0.2.1 起插件适配 DeepSeek Harness 0.2.1-rc.5
+> （`engines.dsh` 改 caret、`cwdOf()` 改读活动投影、rc.5 工具面重新分类、`systemPrompt.context`
+> 加 `interpolate:false` + `required:true`）。当前状态见 `README.md`「本次修复」与 `CHANGELOG.md`
+> 顶条，rc.5 的宿主契约复核见 `docs/06`。
 
 ---
 
@@ -45,12 +48,12 @@ Stop That Shit 的全部判定逻辑。
 
 ```
 sts-plugin/
-├─ package.json          dsh.bundle.patch → ./cordis.patch.yml，engines.dsh = 0.2.1-rc.3
+├─ package.json          dsh.bundle.patch → ./cordis.patch.yml，engines.dsh = ^0.2.1-rc.3
 ├─ cordis.patch.yml      三行：- insert: / - id: sts-native / name: dsh-stop-that-shit
 ├─ lib/index.js          cordis 插件本体（335 行）
 ├─ lib/adapter.js        DSH 工具名 → STS action 事实（176 行）
 ├─ vendor-sts/           upstream 决策引擎 src/ 30 个 .cjs，MIT（0.2.0 起含 0.2.5.1 两项修复）
-└─ test/conformance.mjs  确定性断言（v0.1.0 时 49 条，0.2.0 起 56 条）
+└─ test/conformance.mjs  确定性断言（v0.1.0 49 → 0.2.0 56 → 0.2.1 起 121 条；另加 rc5-tool-inventory）
 ```
 
 **关键设计：判定逻辑一行没改。** `vendor-sts/src/decision.cjs` 是 upstream 的原文，
@@ -64,7 +67,7 @@ sts-plugin/
 | `agent/pre-step` | 把契约/状态通知作为一条 user 消息追加到该 step |
 | `tools/pre-execute` | before-action。返回 `{kind:"deny", reason}` → 模型收到 `Error: <reason>` |
 | `tools/post-execute` | 只用于 `subagent` / `spawn_teammate` 结算后释放 delegation 预算 |
-| `systemPrompt.context` | order 550，每次请求刷新当前契约状态，不动稳定系统提示 |
+| `systemPrompt.context` | order 550，每次请求刷新当前契约状态；落点是 runtime-context **用户消息里的一个 section**，不是 system prompt |
 
 三个必须知道的实现细节：
 
@@ -82,7 +85,7 @@ sts-plugin/
 
 ## 三、验证结果
 
-### 3.1 确定性一致性套件 — 49/49 PASS，无模型参与
+### 3.1 确定性一致性套件 — v0.1.0 时 49/49 PASS，无模型参与
 
 `node test/conformance.mjs`：用假 cordis ctx 驱动插件真正注册的那几个 handler，
 断言整张决策矩阵。
@@ -104,14 +107,21 @@ plain prompt injects nothing ............. 1   PASS
 RESULT: 49/49 checks passed.
 ```
 
+> 上面是 v0.1.0 时的一次输出。v0.2.1（rc.5 适配）起套件扩到 **121 条**，全部通过；
+> 最新的分组与总数以 `node test/conformance.mjs` 的尾部输出为准。
+
 覆盖到的拒绝码：`PATH_OUTSIDE_CONTRACT`、`WRITE_PATH_UNPROVEN`、`MODE_FORBIDS_MUTATION`、
 `MUTABILITY_UNPROVEN`、`HASH_NOT_AUTHORIZED`、`DEPENDENCY_NOT_AUTHORIZED`、
 `AGENT_BUDGET_EXHAUSTED`。
 
-### 3.2 端到端 — 19/19 PASS，真 headless boot + 真模型
+### 3.2 端到端 — v0.1.0 时 19/19 PASS，真 headless boot + 真模型
 
 `e2e-native/probe-native.mjs`，profile `stsnative`，模型走本机 magpie 网关
 （`opencode-go/deepseek-v4.1-flash`）。每次都是全新 boot，插件自报：
+
+> 这是 v0.1.0 的端到端记录。v0.2.1 在 0.2.1-rc.5 上用 `e2e/rc5/` 重跑，
+> 报告见 `e2e/REPORT-rc5.md`：7 个场景全部通过，48/48 项检查（其中 5 项依赖模型行为，
+> 标记为信息性、不参与判定），运行对象是安装版 0.2.1-rc.5。
 
 ```
 [sts-native] loaded pid=5752 dataDir=C:\Users\<you>\.dsh\sts-data
@@ -180,18 +190,29 @@ Next: Report the finding, use a read-only action, or obtain an explicit change c
   这类一律 fail closed。好处是安全，坏处是可能拦掉本可放行的动作 —— 用 `files=**` 或调 level 解决。
 - **fail-open。** 任何 hook 异常只打 stderr 并放行，与 upstream 的 hook adapter 一致。
 - **`vendor-sts` 基于 upstream commit `e2660f4` 的冻结快照**（0.2.0 起含 0.2.5.1 的两项修复）。upstream 升级判定逻辑时需要重新 vendor 并重打这两处。
+- **`review` 模式下上游 shell 分类器很保守。** `Get-ChildItem -Recurse -Filter *.ts`、
+  `... | Where-Object { ... }`、`git status | Out-String`、`2>$null` 重定向都会被判「读」证明不成立
+  （`MUTABILITY_UNPROVEN`）—— 这是上游 `shell-analysis.cjs` 的判定，不是 rc.5 回归。审查场景请用
+  `read` / `glob` / `grep`，不要用 shell 一行流；不为这个场景放松分类器。
+- **`mcp__<server>__<tool>` 保持未分类（`unknown`）。** MCP server 自己决定效果，`review` 或武装
+  `files=` 边界后会被当作未证明动作拒绝；需要放行某条 MCP 写路径时，显式分类，不要指望自动推断。
+- **`workflow` 与 `subagent` 一样花委派预算。** `agents=N` 对它同样生效；它内部子代理的写调用是
+  独立 execution，会逐个判（与 `run_code` 子派发同一条路径）。
 
 ---
 
 ## 六、怎么装到桌面版
 
-目前只在 `stsnative` headless profile 里验证过（真机、真模型、真 boot），
+> 路径说明：v0.1.0 时插件在 `sts-plugin/` 子目录、端到端在 `e2e-native/`；现在包就在仓库根，
+> 端到端在 `e2e/rc5/`。安装请用仓库根的 `install.mjs`。
+
+目前只在 headless profile 里验证过（v0.1.0 用 `stsnative`，v0.2.1 用 `stsrc5`；真机、真模型、真 boot），
 **没有动用户的 `desktop` profile**。
 
 装到桌面版：
 
-1. 把 [`sts-plugin/`](sts-plugin) 放到 `C:\Users\<you>\.dsh\profiles\desktop\node_modules\dsh-stop-that-shit`
-   （junction 也行）。
+1. 把仓库根的包目录放到 `C:\Users\<you>\.dsh\profiles\desktop\node_modules\dsh-stop-that-shit`
+   （junction 也行；也可以直接 `node install.mjs --profile desktop`）。
 2. 桌面 profile 的 `package.json` 里 `dsh.profile.bundles` 追加 `"dsh-stop-that-shit"`。
 3. 重启桌面版。
 
@@ -202,12 +223,37 @@ Next: Report the finding, use a read-only action, or obtain an explicit change c
 
 ## 七、复现清单
 
+> 下面按 v0.1.0 的路径写成，括号里是当前路径；命令已改为现在可直接跑的形态。
+
 ```bash
 # 1. 确定性套件（不需要模型、不需要 profile）
-cd sts-plugin && node test/conformance.mjs        # 期望 49/49
+node test/conformance.mjs                         # 期望全部通过（v0.2.1 起 121 条）
 
-# 2. 端到端（需要 stsnative profile + magpie 网关）
-cd e2e-native
-node switch.mjs --to ../sts-plugin                # 切 junction 并断言 bundle 层合成
-node probe-native.mjs                             # 期望 4 场景 19 断言全 PASS
+# 2. 端到端（rc.5；需要 stsrc5 临时 profile + magpie 网关）
+node e2e/rc5/harness-version.mjs                  # 打印 0.2.1-rc.5
+node e2e/rc5/setup.mjs                            # 建 stsrc5 与 %TEMP%\sts-rc5\run.bat
+node e2e/rc5/probe.mjs                            # 跑全部场景，写 out\summary.json
+node e2e/rc5/report.mjs                           # 由 summary.json 重新生成 e2e/REPORT-rc5.md
 ```
+
+v0.1.0 的对应物是 `e2e-native/switch.mjs` + `probe-native.mjs`（4 场景 19 断言）。
+
+---
+
+## 八、v0.2.1 的现状（DeepSeek Harness 0.2.1-rc.5）
+
+> 本文件正文是 v0.1.0 的设计记录。v0.2.1 在 rc.5 上重做宿主契约复核后，结论与设计基本不变，
+> 但有四处必须记下来 —— 详细证据见 [`docs/06-rc5-host-contract.zh.md`](06-rc5-host-contract.zh.md)。
+
+1. **五个宿主 seam 在 rc.3 → rc.5 之间逐字节未变。** 305 个 shared package 中只有 7 个有代码变化，
+   全部与 UI/MCP 相关；本文的「原生插件可行」结论在 rc.5 上依然成立。
+2. **真正让插件「消失」的是版本闸门，不是 API。** `engines.dsh` 写成精确版 `0.2.1-rc.3` 时，
+   rc.5 把整个 bundle 静默丢弃（stderr 一行 `dsh: skipping profile bundle ...`，退出码 0），
+   插件不会 `apply()`。v0.2.1 起改为 `^0.2.1-rc.3`；`^0.2.1`（去掉 prerelease）反而更窄，也会失败。
+3. **`cwdOf()` 不能读创建期快照。** `session.header.cwd` 不会随 `working_directory` 变化，
+   换过目录后相对路径会按旧根判。v0.2.1 起优先 `workingDirectory.get(session)` 的活动投影。
+4. **rc.5 的工具面要重新分类。** `exit_plan_mode`→`control`、`workflow`→`delegate`，
+   `ops_*` / 插件簿记 / qqbot 频道→`control`，`cordis_inspect_*`→`read`；`mcp__*` 保持
+   `unknown`（fail-closed）。清单是签入证据：`test/rc5-tool-inventory.mjs`（桌面 117 / headless 25 个工具名）。
+
+验收：`node test/conformance.mjs`（121 条全通过）；`e2e/REPORT-rc5.md`：真实 headless 启动 + 真实模型 + 真实文件系统，7 个场景全部通过，48/48 项检查（其中 5 项依赖模型行为，标记为信息性、不参与判定），运行对象是安装版 0.2.1-rc.5。

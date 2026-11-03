@@ -6,6 +6,14 @@
 This repository is a **derivative work** of [lennney/stop-that-shit](https://github.com/lennney/stop-that-shit).
 It is not an official upstream project and carries no upstream endorsement.
 
+## 本仓库版本
+
+| 项 | 值 |
+| --- | --- |
+| 版本 | `dsh-stop-that-shit` **0.2.1** |
+| 已验证运行时 | DeepSeek Harness **0.2.1-rc.5**（Electron 桌面版 win32-x64；验收走同一安装产物的 headless CLI，依据见 `e2e/REPORT-rc5.md`） |
+| 声明支持范围 | `engines.dsh: "^0.2.1-rc.3"` —— 0.2.1-rc.3 起、含 0.2.x，不含 0.3.x |
+
 ## 上游 / Upstream
 
 | 项 | 值 |
@@ -24,11 +32,13 @@ It is not an official upstream project and carries no upstream endorsement.
 | `lib/adapter.js` | DSH 工具调用 → 上游 ControlEvent v2 的适配层 |
 | `cordis.patch.yml` | DSH profile 的 cordis 补丁（insert `sts-native`） |
 | `install.mjs` | 幂等安装/卸载脚本 |
-| `test/conformance.mjs` | 56 条一致性断言 |
+| `test/conformance.mjs` | 121 条一致性断言 |
+| `test/rc5-tool-inventory.mjs` | rc.5 桌面 / headless 实挂工具名与分类清单（签入证据） |
 | `e2e/` | 端到端探针与报告 |
 | `research/claude-code-bridge/` | 早期桥接路线探针与结论 |
 | `docs/01–03` | 上游与 DSH 扩展面取证记录 |
 | `docs/04–05` | 兼容性判定与原生插件设计（中文） |
+| `docs/06` | rc.5 宿主契约复核（中文，本轮 rc.5 适配的证据基础） |
 
 ## 为什么是二次开发而不是 fork 上游
 
